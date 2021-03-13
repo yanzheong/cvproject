@@ -6,6 +6,7 @@ MHI_DURATION = 0.5
 DEFAULT_THRESHOLD = 32
 MAX_TIME_DELTA = 0.1
 MIN_TIME_DELTA = 0.05
+SWIPE_THRESH = 7
 
 
 # (empty) trackbar callback
@@ -14,11 +15,11 @@ def nothing(dummy):
 
 def draw_motion_comp(vis, rect, angle, color):
     x, y, w, h = rect
-    #cv.rectangle(vis, (x, y), (x+w, y+h), (0, 255, 0))
+    cv.rectangle(vis, (x, y), (x+w, y+h), (0, 255, 0))
     r = min(w//2, h//2)
     cx, cy = x+w//2, y+h//2
     angle = angle*np.pi/180
-    #cv.circle(vis, (cx, cy), r, color, 3)
+    cv.circle(vis, (cx, cy), r, color, 3)
     cv.circle(vis, (cx, cy), 3, (0, 255, 0), 3)
     cv.line(vis, (cx, cy), (int(cx+np.cos(angle)*r), int(cy+np.sin(angle)*r)), color, 3)
 
@@ -48,8 +49,10 @@ if __name__ == '__main__':
     hsv = np.zeros((h, w, 3), np.uint8)
     hsv[:,:,1] = 255
 
-    buffer = 0
-    angles = 0
+    left = 0
+    right = 0
+    up = 0
+    down = 0
 
     while True:
         ret, frame = cam.read()
@@ -80,7 +83,7 @@ if __name__ == '__main__':
         for i, rect in enumerate(list(seg_bounds)):
             x, y, rw, rh = rect
             area = rw*rh
-            if area < 450**2:
+            if area < 400**2:
                 continue
             silh_roi   = motion_mask   [y:y+rh,x:x+rw]
             orient_roi = mg_orient     [y:y+rh,x:x+rw]
@@ -89,22 +92,34 @@ if __name__ == '__main__':
             if cv.norm(silh_roi, cv.NORM_L1) < area*0.05:
                 continue
             angle = cv.motempl.calcGlobalOrientation(orient_roi, mask_roi, mhi_roi, timestamp, MHI_DURATION)
-            #print(angle)
-            #print(angles)
-            if ((angle < 10.0 or angle > 350.0)):
-              #print('added')
-              angles += 1
-            #elif buffer >= 1:
-              #print("reset")
-              #angles = 0
-              #buffer = 0
+            print(angle)
+            if ((angle < 10.0) or (angle > 350.0)):
+              right += 1
+              left=up=down = 0
+            elif ((angle < 190) and (angle > 170)):
+              right=up=down = 0
+              left += 1
+            elif ((angle > 260) and (angle < 280)):
+              down=left=right = 0
+              up += 1
+            elif ((angle > 80) and (angle < 100)):
+              up=left=right = 0
+              down += 1
             else:
-              #print('dropped')
-              #buffer += 1
-              angles = 0
-            if angles >= 7:
-              print("Swipe gesture detected!")
-              angles = 0
+              up=down=left=right = 0
+
+            if right >= SWIPE_THRESH:
+              print("Swipe RIGHT detected!")
+              right = 0
+            elif left >= SWIPE_THRESH:
+              print("Swipe LEFT detected!")
+              left = 0
+            elif up >= SWIPE_THRESH:
+              print("Swipe UP detected!")
+              up = 0
+            elif down >= SWIPE_THRESH:
+              print("Swipe DOWN detected!")
+              down = 0
             # color = ((255, 0, 0), (0, 0, 255))[i == 0]
             color = (255, 0, 0)
             draw_motion_comp(vis, rect, angle, color)
