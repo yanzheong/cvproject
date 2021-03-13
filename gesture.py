@@ -1,15 +1,20 @@
 #!/usr/bin/env python
 import numpy as np
 import cv2 as cv
+import brightness
+import volume
+import microphone
 
 MHI_DURATION = 0.5
 DEFAULT_THRESHOLD = 32
 MAX_TIME_DELTA = 0.1
 MIN_TIME_DELTA = 0.05
-SWIPE_THRESH = 6
+HORIZ_THRESH = 6
+VERT_THRESH = 3
 # TODO: swipe up and down very hard to provoke, need to implement differently
 # swipes left and right end at middle, may have to switch from center circle to outside rect borders
 # clear buffers when nothing detected
+# slow/laggy sometimes.
 
 # (empty) trackbar callback
 def nothing(dummy):
@@ -17,11 +22,11 @@ def nothing(dummy):
 
 def draw_motion_comp(vis, rect, angle, color):
     x, y, w, h = rect
-    cv.rectangle(vis, (x, y), (x+w, y+h), (0, 255, 0))
+    #cv.rectangle(vis, (x, y), (x+w, y+h), (0, 255, 0))
     r = min(w//2, h//2)
     cx, cy = x+w//2, y+h//2
     angle = angle*np.pi/180
-    cv.circle(vis, (cx, cy), r, color, 3)
+    #cv.circle(vis, (cx, cy), r, color, 3)
     cv.circle(vis, (cx, cy), 3, (0, 255, 0), 3)
     cv.line(vis, (cx, cy), (int(cx+np.cos(angle)*r), int(cy+np.sin(angle)*r)), color, 3)
 
@@ -34,7 +39,7 @@ if __name__ == '__main__':
 
     cv.namedWindow('motempl')
     visuals = ['input', 'frame_diff', 'motion_hist', 'grad_orient']
-    cv.createTrackbar('visual', 'motempl', 2, len(visuals)-1, nothing)
+    cv.createTrackbar('visual', 'motempl', 3, len(visuals)-1, nothing)
     cv.createTrackbar('threshold', 'motempl', DEFAULT_THRESHOLD, 255, nothing)
 
     cam = cv.VideoCapture(video_src)
@@ -85,9 +90,8 @@ if __name__ == '__main__':
 
         for i, rect in enumerate(list(seg_bounds)):
             x, y, rw, rh = rect
-            cx, cy = x+rw//2, y+rh//2
             area = rw*rh
-            if area < 400**2:
+            if area < 425**2:
                 continue
             silh_roi   = motion_mask   [y:y+rh,x:x+rw]
             orient_roi = mg_orient     [y:y+rh,x:x+rw]
@@ -95,45 +99,47 @@ if __name__ == '__main__':
             mhi_roi    = motion_history[y:y+rh,x:x+rw]
             if cv.norm(silh_roi, cv.NORM_L1) < area*0.05:
                 continue
+            cx, cy = x+rw//2, y+rh//2
             angle = cv.motempl.calcGlobalOrientation(orient_roi, mask_roi, mhi_roi, timestamp, MHI_DURATION)
-            print(cx, cy)
+            #print(cx, cy)
             if ((angle < 10) or (angle > 350)):
-              print('right valid')
               if (not right == 0):
                 right += 1
               elif (right == 0 and cx < centerx):
                 right = 1
               left=up=down = 0
             elif ((angle < 190) and (angle > 170)):
-              print('left valid')
               if (not left == 0):
                 left += 1
               elif (left == 0 and cx > centerx):
                 left = 1
               right=up=down = 0
-            elif ((angle > 260) and (angle < 280)):
+            elif ((angle > 255) and (angle < 285)):
               down=left=right = 0
               up += 1
-            elif ((angle > 80) and (angle < 100)):
+            elif ((angle > 75) and (angle < 105)):
               up=left=right = 0
               down += 1
             else:
-              print('invalid')
               up=down=left=right = 0
 
-            if right >= SWIPE_THRESH:
+            if right >= HORIZ_THRESH:
               if (cx >= centery):
                 print("Swipe RIGHT detected!")
+                brightness.raise_brightness()
                 right = 0
-            elif left >= SWIPE_THRESH:
+            elif left >= HORIZ_THRESH:
               if (cx <= centerx):
                 print("Swipe LEFT detected!")
+                brightness.lower_brightness()
                 left = 0
-            elif up >= SWIPE_THRESH:
+            elif up >= VERT_THRESH:
               print("Swipe UP detected!")
+              volume.raise_volume()
               up = 0
-            elif down >= SWIPE_THRESH:
+            elif down >= VERT_THRESH:
               print("Swipe DOWN detected!")
+              volume.lower_volume()
               down = 0
             # color = ((255, 0, 0), (0, 0, 255))[i == 0]
             color = (255, 0, 0)

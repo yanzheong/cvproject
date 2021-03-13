@@ -1,7 +1,11 @@
 import os
-import win32api
-import win32gui
 from system import isWindows
+try:
+    import win32api
+    import win32gui
+except:
+    pass
+
 
 
 iS_UNMUTED = bool(True)
