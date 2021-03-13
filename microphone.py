@@ -21,5 +21,6 @@ def mute_unmute() :
             os.system("osascript -e 'set volume output muted true'")
             iS_UNMUTED = bool(False)
         else :
-             os.system("osascript -e 'set volume output muted false'")
+            os.system("osascript -e 'set volume output muted false'")
+            iS_UNMUTED = bool(True)
 
