@@ -5,7 +5,7 @@ import math
 
 class Volume:
 
-    def lower_volume()
+    def lower_volume():
         # Get default audio device using PyCAW
         devices = AudioUtilities.GetSpeakers()
         interface = devices.Activate(
@@ -17,7 +17,7 @@ class Volume:
         volume.SetMasterVolumeLevel(currentVolumeDb - 6.0, None)
         # NOTE: -6.0 dB = half volume !
 
-    def raise_volume()
+    def raise_volume():
         # Get default audio device using PyCAW
         devices = AudioUtilities.GetSpeakers()
         interface = devices.Activate(
