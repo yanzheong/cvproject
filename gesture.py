@@ -6,15 +6,14 @@ import volume
 import microphone
 
 MHI_DURATION = 0.5
-DEFAULT_THRESHOLD = 32
-MAX_TIME_DELTA = 0.1
+DEFAULT_THRESHOLD = 24
+MAX_TIME_DELTA = 0.75
 MIN_TIME_DELTA = 0.05
 HORIZ_THRESH = 6
-VERT_THRESH = 3
-# TODO: swipe up and down very hard to provoke, need to implement differently
-# swipes left and right end at middle, may have to switch from center circle to outside rect borders
+VERT_THRESH = 5
+
+# TODO:
 # clear buffers when nothing detected
-# slow/laggy sometimes.
 
 # (empty) trackbar callback
 def nothing(dummy):
@@ -39,7 +38,7 @@ if __name__ == '__main__':
 
     cv.namedWindow('motempl')
     visuals = ['input', 'frame_diff', 'motion_hist', 'grad_orient']
-    cv.createTrackbar('visual', 'motempl', 3, len(visuals)-1, nothing)
+    cv.createTrackbar('visual', 'motempl', 1, len(visuals)-1, nothing)
     cv.createTrackbar('threshold', 'motempl', DEFAULT_THRESHOLD, 255, nothing)
 
     cam = cv.VideoCapture(video_src)
@@ -61,7 +60,8 @@ if __name__ == '__main__':
     up = 0
     down = 0
     centerx = w // 2
-    centery = h // 2
+    miny = 0
+    maxy = h
     while True:
         ret, frame = cam.read()
         if ret == False:
@@ -91,7 +91,7 @@ if __name__ == '__main__':
         for i, rect in enumerate(list(seg_bounds)):
             x, y, rw, rh = rect
             area = rw*rh
-            if area < 425**2:
+            if area < 420**2:
                 continue
             silh_roi   = motion_mask   [y:y+rh,x:x+rw]
             orient_roi = mg_orient     [y:y+rh,x:x+rw]
@@ -101,30 +101,38 @@ if __name__ == '__main__':
                 continue
             cx, cy = x+rw//2, y+rh//2
             angle = cv.motempl.calcGlobalOrientation(orient_roi, mask_roi, mhi_roi, timestamp, MHI_DURATION)
-            #print(cx, cy)
+            # print(cx, cy)
             if ((angle < 10) or (angle > 350)):
               if (not right == 0):
                 right += 1
               elif (right == 0 and cx < centerx):
                 right = 1
-              left=up=down = 0
+              left=up=down=miny = 0
+              maxy = h
             elif ((angle < 190) and (angle > 170)):
               if (not left == 0):
                 left += 1
               elif (left == 0 and cx > centerx):
                 left = 1
-              right=up=down = 0
+              right=up=down=miny = 0
+              maxy = h
             elif ((angle > 255) and (angle < 285)):
-              down=left=right = 0
-              up += 1
+              if (cy <= maxy):
+                maxy = cy
+                up += 1
+              down=left=right=miny = 0
             elif ((angle > 75) and (angle < 105)):
+              if (cy >= miny):
+                miny = cy
+                down += 1
               up=left=right = 0
-              down += 1
+              maxy = h
             else:
-              up=down=left=right = 0
+              up=down=left=right=miny = 0
+              maxy = h
 
             if right >= HORIZ_THRESH:
-              if (cx >= centery):
+              if (cx >= centerx):
                 print("Swipe RIGHT detected!")
                 brightness.raise_brightness()
                 right = 0
