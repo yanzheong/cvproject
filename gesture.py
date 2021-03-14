@@ -50,6 +50,7 @@ if __name__ == '__main__':
         print("could not read from " + str(video_src) + " !\n")
         sys.exit(1)
     h, w = frame.shape[:2]
+    print(h,w)
     prev_frame = frame.copy()
     motion_history = np.zeros((h, w), np.float32)
     hsv = np.zeros((h, w, 3), np.uint8)
@@ -91,7 +92,7 @@ if __name__ == '__main__':
         for i, rect in enumerate(list(seg_bounds)):
             x, y, rw, rh = rect
             area = rw*rh
-            if area < 420**2:
+            if area < (h*w / 5.76):
                 continue
             silh_roi   = motion_mask   [y:y+rh,x:x+rw]
             orient_roi = mg_orient     [y:y+rh,x:x+rw]
