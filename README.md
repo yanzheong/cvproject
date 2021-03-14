@@ -36,9 +36,9 @@ Our approach differs from others by only looking at the instance we care about: 
 
 <a href="https://www.nirsoft.net/utils/nircmd.html">Window nircmd (command-line actions)</a>
 
-<a href="https://www.nirsoft.net/utils/nircmd.html">Window APPCommand (command-line actions for volume)</a>
+<a href="https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-appcommand">Window APPCommand (command-line actions for volume)</a>
 
-<a href="Set/get OSX volume/mute from the command line (Example) (coderwall.com)">Mac volume control</a>
+<a href="https://coderwall.com/p/22p0ja/set-get-osx-volume-mute-from-the-command-line">Mac volume control</a>
 
 
-<a href="How to Adjust Screen Brightness on Mac from Command Line (osxdaily.com)">Mac brightness control</a>
+<a href="https://osxdaily.com/2019/08/14/change-screen-brightness-mac-terminal/">Mac brightness control</a>
