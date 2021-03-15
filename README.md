@@ -9,6 +9,7 @@ Our approach was to ultize OpenCv's optical flow to detect what the user's gestu
 Brian Zhu, Jasmine Woon, and Yan Zhe Ong
 
 # Demo Video / Results
+<a href="https://www.youtube.com/watch?v=p4-2M7LDLtY">Project Demo Video</a>
 
 # Dicussion
 <b> *What problms did you encounter* </b> <br/>

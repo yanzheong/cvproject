@@ -12,9 +12,6 @@ MIN_TIME_DELTA = 0.05
 HORIZ_THRESH = 6
 VERT_THRESH = 5
 
-# TODO:
-# clear buffers when nothing detected
-
 # (empty) trackbar callback
 def nothing(dummy):
     pass
@@ -36,10 +33,10 @@ if __name__ == '__main__':
     except:
         video_src = 0
 
-    cv.namedWindow('motempl')
+    cv.namedWindow('gesture tracker')
     visuals = ['input', 'frame_diff', 'motion_hist', 'grad_orient']
-    cv.createTrackbar('visual', 'motempl', 1, len(visuals)-1, nothing)
-    cv.createTrackbar('threshold', 'motempl', DEFAULT_THRESHOLD, 255, nothing)
+    cv.createTrackbar('visual', 'gesture tracker', 2, len(visuals)-1, nothing)
+    cv.createTrackbar('threshold', 'gesture tracker', DEFAULT_THRESHOLD, 255, nothing)
 
     cam = cv.VideoCapture(video_src)
     if not cam.isOpened():
@@ -50,7 +47,6 @@ if __name__ == '__main__':
         print("could not read from " + str(video_src) + " !\n")
         sys.exit(1)
     h, w = frame.shape[:2]
-    print(h,w)
     prev_frame = frame.copy()
     motion_history = np.zeros((h, w), np.float32)
     hsv = np.zeros((h, w, 3), np.uint8)
@@ -69,14 +65,14 @@ if __name__ == '__main__':
             break
         frame_diff = cv.absdiff(frame, prev_frame)
         gray_diff = cv.cvtColor(frame_diff, cv.COLOR_BGR2GRAY)
-        thrs = cv.getTrackbarPos('threshold', 'motempl')
+        thrs = cv.getTrackbarPos('threshold', 'gesture tracker')
         ret, motion_mask = cv.threshold(gray_diff, thrs, 1, cv.THRESH_BINARY)
         timestamp = cv.getTickCount() / cv.getTickFrequency()
         cv.motempl.updateMotionHistory(motion_mask, motion_history, timestamp, MHI_DURATION)
         mg_mask, mg_orient = cv.motempl.calcMotionGradient( motion_history, MAX_TIME_DELTA, MIN_TIME_DELTA, apertureSize=5 )
         seg_mask, seg_bounds = cv.motempl.segmentMotion(motion_history, timestamp, MAX_TIME_DELTA)
 
-        visual_name = visuals[cv.getTrackbarPos('visual', 'motempl')]
+        visual_name = visuals[cv.getTrackbarPos('visual', 'gesture tracker')]
         if visual_name == 'input':
             vis = frame.copy()
         elif visual_name == 'frame_diff':
@@ -134,20 +130,20 @@ if __name__ == '__main__':
 
             if right >= HORIZ_THRESH:
               if (cx >= centerx):
-                print("Swipe RIGHT detected!")
+                print("Swipe RIGHT detected, brightness INCREASED")
                 brightness.raise_brightness()
                 right = 0
             elif left >= HORIZ_THRESH:
               if (cx <= centerx):
-                print("Swipe LEFT detected!")
+                print("Swipe LEFT detected, brightness DECREASED")
                 brightness.lower_brightness()
                 left = 0
             elif up >= VERT_THRESH:
-              print("Swipe UP detected!")
+              print("Swipe UP detected, volume INCREASED")
               volume.raise_volume()
               up = 0
             elif down >= VERT_THRESH:
-              print("Swipe DOWN detected!")
+              print("Swipe DOWN detected, volume DECREASED")
               volume.lower_volume()
               down = 0
             # color = ((255, 0, 0), (0, 0, 255))[i == 0]
@@ -156,7 +152,7 @@ if __name__ == '__main__':
             break
         
         cv.putText(vis, visual_name, (20, 20), cv.FONT_HERSHEY_PLAIN, 1.0, (200,0,0))
-        cv.imshow('motempl', vis)
+        cv.imshow('gesture tracker', vis)
 
         prev_frame = frame.copy()
         if 0xFF & cv.waitKey(5) == 27:
