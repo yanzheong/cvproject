@@ -12,7 +12,7 @@ Brian Zhu, Jasmine Woon, and Yan Zhe Ong
 <a href="https://www.youtube.com/watch?v=wHFkZkZ62cQ">Project Demo Video</a>
 
 # Dicussion
-<b> *What problms did you encounter* </b> <br/>
+<b> *What problems did you encounter* </b> <br/>
 
 One problem that we encounter was downloading OpenCV compatible with C/C++. After multiple tries, we resorted to using OpenCV-python. As a result, we couldn't use the library we have built up from our homework. Another issue that we encounter was working on different operating systems. Our team is comprised of Mac and Windows users, so we had to look for a library to check which operating system is being used and then run the correct keyboard shortcut. In addition, Windows requires downloading utility programs or other modules to run command-line instructions. <br/>
 
